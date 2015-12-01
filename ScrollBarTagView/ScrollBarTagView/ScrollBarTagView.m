@@ -7,6 +7,7 @@
 //
 
 #import "ScrollBarTagView.h"
+#import <objc/runtime.h>
 
 @interface ScrollBarTagView ()
 
@@ -22,7 +23,7 @@
 
 #pragma mark - class method
 
-+ (ScrollBarTagView *)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock {
++ (void)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock {
     // setup ScrollBarTagView
     ScrollBarTagView *scrollBarTagView = [ScrollBarTagView new];
     scrollBarTagView.scrollView = scrollView;
@@ -33,8 +34,9 @@
     // addObserver
     [scrollBarTagView.scrollViewBarImgView addObserver:scrollBarTagView forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:nil];
     [scrollBarTagView.scrollViewBarImgView addObserver:scrollBarTagView forKeyPath:@"alpha" options:NSKeyValueObservingOptionNew context:nil];
-    [scrollView addSubview:scrollBarTagView.tagView];
-    return scrollBarTagView;
+    [scrollView.superview addSubview:scrollBarTagView.tagView];
+    
+    objc_setAssociatedObject(self, _cmd, scrollBarTagView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 #pragma mark - private instance method
@@ -42,32 +44,34 @@
 #pragma mark * misc
 
 - (void)adjustPositionForScrollView {
+    CGPoint barImgViewPoint = [self.scrollView convertPoint:self.scrollViewBarImgView.frame.origin toView:self.scrollView.superview];
+    
     // 計算 scrollViewBarImgView 位置給 tagView
     CGFloat bothCenterY = (CGRectGetHeight(self.scrollViewBarImgView.frame) - CGRectGetHeight(self.tagView.frame)) / 2;
     CGFloat tagViewX = (CGRectGetWidth(self.scrollView.frame) - (CGRectGetWidth(self.tagView.frame) + tagViewGap));
-    CGFloat tagViewY = CGRectGetMinY(self.scrollViewBarImgView.frame) + bothCenterY;
+    CGFloat tagViewY = barImgViewPoint.y + bothCenterY;
     CGRect newFrame = self.tagView.frame;
     newFrame.origin.x = tagViewX;
+    newFrame.origin.y = tagViewY;
     
-    // check tagViewY < maxScrollTop
-    newFrame.origin.y = tagViewY < self.maxScrollTop ? self.maxScrollTop : tagViewY;
-    self.tagView.frame = newFrame;
-    
-    // return tagView, tagViewY
-    self.scrollBlock(self.tagView, @(newFrame.origin.y));
-}
+    // check limit
+    CGFloat bottomLimit = self.scrollView.contentOffset.y + CGRectGetHeight(self.scrollView.frame);
+    CGFloat topLimit = self.scrollView.contentOffset.y;
+    BOOL isDownScroll = bottomLimit < self.scrollView.contentSize.height ? YES : NO;
+    BOOL isTopScroll = topLimit >= 0 ? YES : NO;
+    if (isTopScroll && isDownScroll) {
+        self.tagView.frame = newFrame;
+    }
 
-#pragma mark * tagView hidden
-
-- (void)removeHiddenTagViewAnimation {
-    self.isHidden = NO;
-    [self.tagView.layer removeAllAnimations];
+    CGFloat tagViewOnScrollY = CGRectGetMinY(self.scrollViewBarImgView.frame) + bothCenterY;
+    self.scrollBlock(self.tagView, @(tagViewOnScrollY));
 }
 
 - (void)hiddenTagViewAnimation {
     self.isHidden = YES;
     __weak typeof(self) weakSelf = self;
-    [UIView animateWithDuration:0.5 delay:0.5 options:UIViewAnimationOptionBeginFromCurrentState animations: ^{
+    
+    [UIView animateWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionAllowUserInteraction animations: ^{
         weakSelf.tagView.alpha = 0.0f;
     } completion: ^(BOOL finished) {
         weakSelf.tagView.alpha = 1.0f;
@@ -80,14 +84,14 @@
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([keyPath isEqualToString:@"frame"]) {
         // observe scrollViewBarImgView frame, 代表在滾動 scrollView
-        [self removeHiddenTagViewAnimation];
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hiddenTagViewAnimation) object:nil];
         [self adjustPositionForScrollView];
     }
     else if ([keyPath isEqualToString:@"alpha"]) {
         // observe scrollViewBarImgView alpha
         UIImageView *scrollViewBarImgView = (UIImageView *)object;
         if (!scrollViewBarImgView.alpha) {
-            [self hiddenTagViewAnimation];
+            [self performSelector:@selector(hiddenTagViewAnimation) withObject:nil afterDelay:0.5];
         }
     }
 }

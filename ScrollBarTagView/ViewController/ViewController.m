@@ -8,12 +8,6 @@
 
 #import "ViewController.h"
 
-@interface ViewController ()
-
-@property (nonatomic, strong) ScrollBarTagView *scrollBarTagView;
-
-@end
-
 @implementation ViewController
 
 #pragma mark - UITableViewDelegate
@@ -42,16 +36,17 @@
 
 - (void)setupScrollBarTagView {
     __weak typeof(self) weakSelf = self;
-    self.scrollBarTagView = [ScrollBarTagView initWithScrollView:self.listTableView withTagView: ^UIView *{
+    [ScrollBarTagView initWithScrollView:self.listTableView withTagView: ^UIView *{
         TagView *tagView = [TagView new];
         tagView.hidden = YES;
         return tagView;
     } didScroll: ^(TagView *tagView, NSNumber *offset) {
+        CGPoint point = [weakSelf.view convertPoint:tagView.center toView:weakSelf.listTableView];
         tagView.hidden = NO;
         NSArray *cells = [weakSelf.listTableView visibleCells];
         NSString *addressLabel = @"0";
         for (UITableViewCell *cell in cells) {
-            if (CGRectContainsPoint(cell.frame, tagView.center)) {
+            if (CGRectContainsPoint(cell.frame, point)) {
                 addressLabel = [NSString stringWithFormat:@"%td", [weakSelf.listTableView indexPathForCell:cell].row];
                 break;
             }

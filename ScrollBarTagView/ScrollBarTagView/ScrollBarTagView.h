@@ -15,9 +15,7 @@ typedef void (^ScrollBlock)(id tagView, id offset);
 
 @interface ScrollBarTagView : NSObject
 
-@property (nonatomic, assign) CGFloat maxScrollTop;
-
-+ (ScrollBarTagView *)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock;
++ (void)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock;
 
 @end
 
