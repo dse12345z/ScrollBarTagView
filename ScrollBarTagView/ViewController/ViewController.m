@@ -10,7 +10,6 @@
 
 @interface ViewController ()
 
-@property (nonatomic, strong) UIImageView *scrollViewBarImgView;
 @property (nonatomic, strong) ScrollBarTagView *scrollBarTagView;
 
 @end
