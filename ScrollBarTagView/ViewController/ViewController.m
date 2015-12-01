@@ -54,6 +54,7 @@
         for (UITableViewCell *cell in cells) {
             if (CGRectContainsPoint(cell.frame, tagView.center)) {
                 addressLabel = [NSString stringWithFormat:@"%td", [weakSelf.listTableView indexPathForCell:cell].row];
+                break;
             }
         }
         tagView.addressLabel.text = addressLabel;
