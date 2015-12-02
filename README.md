@@ -10,7 +10,7 @@ Usage
 
 3.- (void)viewDidAppear written under the code
 
-    self.scrollBarTagView = [ScrollBarTagView initWithScrollView:yourScrollView withTagView: ^UIView *{
+    [ScrollBarTagView initWithScrollView:yourScrollView withTagView: ^UIView *{
         // custom your tagView
         return tagView;
     } didScroll: ^(id tagView, id offset) {
