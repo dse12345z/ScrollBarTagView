@@ -38,11 +38,9 @@
     __weak typeof(self) weakSelf = self;
     [ScrollBarTagView initWithScrollView:self.listTableView withTagView: ^UIView *{
         TagView *tagView = [TagView new];
-        tagView.hidden = YES;
         return tagView;
-    } didScroll: ^(TagView *tagView, NSNumber *offset) {
+    } didScroll: ^(TagView *tagView, CGFloat offset) {
         CGPoint point = [weakSelf.view convertPoint:tagView.center toView:weakSelf.listTableView];
-        tagView.hidden = NO;
         NSArray *cells = [weakSelf.listTableView visibleCells];
         NSString *addressLabel = @"0";
         for (UITableViewCell *cell in cells) {

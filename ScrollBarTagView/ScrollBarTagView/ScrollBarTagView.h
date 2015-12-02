@@ -11,7 +11,7 @@
 #define tagViewGap 15
 
 typedef UIView *(^TagViewBlock)();
-typedef void (^ScrollBlock)(id tagView, id offset);
+typedef void (^ScrollBlock)(id tagView, CGFloat offset);
 
 @interface ScrollBarTagView : NSObject
 
