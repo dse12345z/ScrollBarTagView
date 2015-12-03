@@ -13,7 +13,7 @@
 
 @property (nonatomic, weak) UIScrollView *scrollView;
 @property (nonatomic, weak) UIImageView *scrollViewBarImgView;
-@property (nonatomic, strong) UIView *tagView;
+@property (nonatomic, weak) UIView *tagView;
 @property (nonatomic, copy) ScrollBlock scrollBlock;
 @property (nonatomic, assign) BOOL isStopHiddenAnimation;
 @property (nonatomic, assign) BOOL isAnimation;
