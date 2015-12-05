@@ -1,6 +1,6 @@
 ScrollBarTagView
 =============
-![alt tag](http://i.imgur.com/i3YnNVi.gif)
+![alt tag](http://i.imgur.com/i3YnNVi.gif) 
 
 Usage
 =============
