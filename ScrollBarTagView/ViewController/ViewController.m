@@ -39,13 +39,14 @@
     [ScrollBarTagView initWithScrollView:self.listTableView withTagView: ^UIView *{
         TagView *tagView = [TagView new];
         return tagView;
-    } didScroll: ^(TagView *tagView, CGFloat offset) {
+    } didScroll:^(id scrollBarTagView, TagView *tagView, CGFloat offset) {
+        [scrollBarTagView showTagViewAnimation];
         CGPoint point = [weakSelf.view convertPoint:tagView.center toView:weakSelf.listTableView];
         NSArray *cells = [weakSelf.listTableView visibleCells];
         NSString *addressLabel = @"0";
         for (UITableViewCell *cell in cells) {
             if (CGRectContainsPoint(cell.frame, point)) {
-                addressLabel = [NSString stringWithFormat:@"%td", [weakSelf.listTableView indexPathForCell:cell].row];
+                addressLabel = [NSString stringWithFormat:@"%tdkm", [weakSelf.listTableView indexPathForCell:cell].row];
                 break;
             }
         }
