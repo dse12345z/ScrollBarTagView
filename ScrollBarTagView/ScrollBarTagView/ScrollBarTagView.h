@@ -8,14 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-#define tagViewGap 15
+#define tagViewGap 10
 
 typedef UIView *(^TagViewBlock)();
-typedef void (^ScrollBlock)(id tagView, CGFloat offset);
+typedef void (^ScrollBlock)(id scrollBarTagView, id tagView, CGFloat offset);
 
 @interface ScrollBarTagView : NSObject
 
+@property (nonatomic, assign) CGFloat stayOffset;
+
 + (void)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock;
 
-@end
+- (void)showTagViewAnimation;
+- (void)hiddenTagViewAnimation;
 
+@end

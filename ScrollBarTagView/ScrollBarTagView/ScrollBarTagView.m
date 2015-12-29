@@ -12,8 +12,8 @@
 @interface ScrollBarTagView ()
 
 @property (nonatomic, weak) UIScrollView *scrollView;
-@property (nonatomic, weak) UIImageView *scrollViewBarImgView;
 @property (nonatomic, weak) UIView *tagView;
+@property (nonatomic, strong) UIImageView *scrollViewBarImgView;
 @property (nonatomic, copy) ScrollBlock scrollBlock;
 @property (nonatomic, assign) BOOL isStopHiddenAnimation;
 @property (nonatomic, assign) BOOL isAnimation;
@@ -21,24 +21,35 @@
 @end
 
 @implementation ScrollBarTagView
+@synthesize stayOffset = _stayOffset;
 
 #pragma mark - class method
 
 + (void)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock {
-    // setup ScrollBarTagView
-    ScrollBarTagView *scrollBarTagView = [ScrollBarTagView new];
-    scrollBarTagView.scrollView = scrollView;
-    scrollBarTagView.scrollViewBarImgView = scrollView.subviews.lastObject;
-    scrollBarTagView.scrollBlock = scrollBlock;
-    scrollBarTagView.tagView = tagViewBlock();
-    scrollBarTagView.tagView.hidden = YES;
-    
-    // addObserver
-    [scrollBarTagView.scrollViewBarImgView addObserver:scrollBarTagView forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:nil];
-    [scrollBarTagView.scrollViewBarImgView addObserver:scrollBarTagView forKeyPath:@"alpha" options:NSKeyValueObservingOptionNew context:nil];
-    [scrollView.superview addSubview:scrollBarTagView.tagView];
-    
-    objc_setAssociatedObject(self, _cmd, scrollBarTagView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    // lock repeat add ScrollBarTagView
+    if (!objc_getAssociatedObject(scrollView, @selector(initWithScrollView:withTagView:didScroll:))) {
+        // setup ScrollBarTagView
+        ScrollBarTagView *scrollBarTagView = [ScrollBarTagView new];
+        scrollBarTagView.scrollView = scrollView;
+        scrollBarTagView.scrollViewBarImgView = scrollView.subviews.lastObject;
+        scrollBarTagView.scrollBlock = scrollBlock;
+        scrollBarTagView.tagView = tagViewBlock();
+        scrollBarTagView.tagView.hidden = YES;
+        
+        // setup tagView origin x
+        CGRect newFrame = scrollBarTagView.tagView.frame;
+        CGFloat tagViewX = CGRectGetWidth([UIScreen mainScreen].bounds) - CGRectGetWidth(scrollBarTagView.tagView.frame);
+        newFrame.origin.x = tagViewX;
+        scrollBarTagView.tagView.frame = newFrame;
+        
+        // addObserver
+        [scrollBarTagView.scrollViewBarImgView addObserver:scrollBarTagView forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:nil];
+        [scrollBarTagView.scrollViewBarImgView addObserver:scrollBarTagView forKeyPath:@"alpha" options:NSKeyValueObservingOptionNew context:nil];
+        [scrollView.superview addSubview:scrollBarTagView.tagView];
+        
+        // objc runtime
+        objc_setAssociatedObject(scrollView, _cmd, scrollBarTagView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
 }
 
 #pragma mark - private instance method
@@ -49,40 +60,24 @@
     // convert scrollViewBarImgView point on scrollView superview
     CGPoint barImgViewConvertPoint = [self.scrollView convertPoint:self.scrollViewBarImgView.frame.origin toView:self.scrollView.superview];
     
-    // 計算 scrollViewBarImgView 位置給 tagView
+    // calculate tagView from scrollViewBarImgView
     CGFloat bothCenterY = (CGRectGetHeight(self.scrollViewBarImgView.frame) - CGRectGetHeight(self.tagView.frame)) / 2.0f;
     CGFloat tagViewY = barImgViewConvertPoint.y + bothCenterY;
     CGRect newFrame = self.tagView.frame;
     newFrame.origin.y = tagViewY;
+    self.tagView.frame = newFrame;
     
-    if (!self.isAnimation && self.tagView.hidden) {
-        // 隱藏狀態下保持 origin.x 初始化 (沒有動畫)
-        CGFloat tagViewX = CGRectGetWidth(self.scrollView.frame) - CGRectGetWidth(self.tagView.frame);
-        newFrame.origin.x = tagViewX;
-    }
-    
-    // check screen limit
-    CGFloat topLimit = self.scrollView.contentOffset.y;
-    CGFloat bottomLimit = self.scrollView.contentOffset.y + CGRectGetHeight(self.scrollView.frame);
-    BOOL isTopScreen = topLimit >= 0 ? YES : NO;
-    BOOL isDownScreen = bottomLimit < self.scrollView.contentSize.height ? YES : NO;
-    if (isTopScreen && isDownScreen) {
-        self.tagView.frame = newFrame;
-    }
-    
-    [self showTagViewAnimation];
-    
-    CGFloat tagViewOnScrollY = CGRectGetMinY(self.scrollViewBarImgView.frame) + bothCenterY;
-    self.scrollBlock(self.tagView, tagViewOnScrollY);
+    self.scrollBlock(self, self.tagView, CGRectGetMidY(self.scrollViewBarImgView.frame));
 }
 
 - (CGRect)tagViewFrameToShow:(BOOL)isShow {
     CGRect newFrame = self.tagView.frame;
+    CGFloat fixedSpace = CGRectGetWidth([UIScreen mainScreen].bounds) - CGRectGetWidth(self.tagView.frame);
     if (isShow) {
-        newFrame.origin.x -= tagViewGap;
+        newFrame.origin.x = fixedSpace - tagViewGap;
     }
     else {
-        newFrame.origin.x += tagViewGap;
+        newFrame.origin.x = fixedSpace + tagViewGap;
     }
     return newFrame;
 }
@@ -90,7 +85,7 @@
 #pragma mark * animation
 
 - (void)showTagViewAnimation {
-    if (self.tagView.hidden && !self.isAnimation) {
+    if (self.tagView.hidden && !self.isAnimation && self.scrollViewBarImgView.alpha) {
         self.tagView.hidden = NO;
         self.isAnimation = YES;
         __weak typeof(self) weakSelf = self;
@@ -113,12 +108,12 @@
             weakSelf.tagView.alpha = 0.0f;
         } completion: ^(BOOL finished) {
             if (weakSelf.isStopHiddenAnimation) {
-                // 中斷隱藏動畫
+                // stop hidden animation
                 weakSelf.tagView.frame = [weakSelf tagViewFrameToShow:YES];
                 weakSelf.tagView.hidden = NO;
             }
             else {
-                // 完成隱藏動畫
+                // completion hidden animation
                 weakSelf.tagView.hidden = YES;
             }
             weakSelf.isAnimation = NO;
@@ -131,7 +126,7 @@
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([keyPath isEqualToString:@"frame"]) {
-        // observe scrollViewBarImgView frame, 代表在滾動 scrollView
+        // observe scrollViewBarImgView frame (scrolling)
         [self adjustPositionForScrollView];
     }
     else if ([keyPath isEqualToString:@"alpha"]) {
@@ -147,6 +142,20 @@
             [self performSelector:@selector(hiddenTagViewAnimation) withObject:nil afterDelay:0.5f];
         }
     }
+}
+
+#pragma mark - getter / setter
+
+- (void)setStayOffset:(CGFloat)stayOffset {
+    CGPoint centerPoint = CGPointMake(0.0f, stayOffset);
+    CGPoint convertPoint = [self.scrollView convertPoint:centerPoint toView:self.scrollView.superview];
+    CGRect newFrame = self.tagView.frame;
+    newFrame.origin.y = convertPoint.y;
+    self.tagView.frame = newFrame;
+}
+
+- (CGFloat)stayOffset {
+    return _stayOffset;
 }
 
 #pragma mark - life cycle
