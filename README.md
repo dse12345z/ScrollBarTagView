@@ -13,7 +13,7 @@ copy ScrollBarTagView folder (ScrollBarTagView.h / ScrollBarTagView.m)
 
 1.add the following line to your Podfile:
 
-     pod 'ScrollBarTagView', '~> v.v.v'
+     pod 'ScrollBarTagView', '~> 0.0.1'
 
 2.install ScrollBarTagView into your project:
 
