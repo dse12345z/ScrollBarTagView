@@ -36,10 +36,7 @@
 
 - (void)setupScrollBarTagView {
     __weak typeof(self) weakSelf = self;
-    [ScrollBarTagView initWithScrollView:self.listTableView withTagView: ^UIView *{
-        TagView *tagView = [TagView new];
-        return tagView;
-    } didScroll:^(id scrollBarTagView, TagView *tagView, CGFloat offset) {
+    [ScrollBarTagView initWithScrollView:self.listTableView withTagView:[TagView new] didScroll: ^(id scrollBarTagView, TagView *tagView, CGFloat offset) {
         [scrollBarTagView showTagViewAnimation];
         CGPoint point = [weakSelf.view convertPoint:tagView.center toView:weakSelf.listTableView];
         NSArray *cells = [weakSelf.listTableView visibleCells];
