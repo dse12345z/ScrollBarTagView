@@ -25,15 +25,15 @@
 
 #pragma mark - class method
 
-+ (void)initWithScrollView:(UIScrollView *)scrollView withTagView:(TagViewBlock)tagViewBlock didScroll:(ScrollBlock)scrollBlock {
++ (void)initWithScrollView:(UIScrollView *)scrollView withTagView:(UIView *)tagView didScroll:(ScrollBlock)scrollBlock {
     // lock repeat add ScrollBarTagView
-    if (!objc_getAssociatedObject(scrollView, @selector(initWithScrollView:withTagView:didScroll:))) {
+    if (!objc_getAssociatedObject(scrollView, _cmd)) {
         // setup ScrollBarTagView
         ScrollBarTagView *scrollBarTagView = [ScrollBarTagView new];
         scrollBarTagView.scrollView = scrollView;
         scrollBarTagView.scrollViewBarImgView = scrollView.subviews.lastObject;
         scrollBarTagView.scrollBlock = scrollBlock;
-        scrollBarTagView.tagView = tagViewBlock();
+        scrollBarTagView.tagView = tagView;
         scrollBarTagView.tagView.hidden = YES;
         
         // setup tagView origin x
@@ -147,6 +147,7 @@
 #pragma mark - getter / setter
 
 - (void)setStayOffset:(CGFloat)stayOffset {
+    _stayOffset = stayOffset;
     CGPoint centerPoint = CGPointMake(0.0f, stayOffset);
     CGPoint convertPoint = [self.scrollView convertPoint:centerPoint toView:self.scrollView.superview];
     CGRect newFrame = self.tagView.frame;
