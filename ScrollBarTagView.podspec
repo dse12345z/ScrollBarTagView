@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = 'ScrollBarTagView'
-  s.version      = '1.0.0'
+  s.version      = '1.0.1'
   s.summary      = 'Add a custom TagView on ScrollViewBar, with ScrollViewBar scroll. Can displayed something info on the TagView.'
   s.homepage     = 'https://github.com/dse12345z/ScrollBarTagView'
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
