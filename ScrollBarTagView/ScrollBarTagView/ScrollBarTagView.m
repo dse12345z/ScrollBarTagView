@@ -12,7 +12,7 @@
 @interface ScrollBarTagView ()
 
 @property (nonatomic, weak) UIScrollView *scrollView;
-@property (nonatomic, weak) UIView *tagView;
+@property (nonatomic, strong) UIView *tagView;
 @property (nonatomic, strong) UIImageView *scrollViewBarImgView;
 @property (nonatomic, copy) ScrollBlock scrollBlock;
 @property (nonatomic, assign) BOOL isStopHiddenAnimation;
